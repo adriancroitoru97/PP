@@ -80,8 +80,40 @@
 ; (de exemplu pentru determinarea nivelului din arbore 
 ; pe care se află n, sau a indexului minim/maxim de pe 
 ; nivelul respectiv, etc.)
+
+(define (3->power n)
+  (if (= n 0)
+      1
+      (* 3 (3->power (- n 1)))))
+
+
+(define (progression-sum n)
+  (if (= n 0)
+      1
+      (+ (3->power n) (progression-sum (- n 1)))))
+
+
+(define (get-level n acc)
+  (if (<= n (progression-sum acc))
+      (+ 1 acc)
+      (get-level n (+ 1 acc))))
+
+
+(define (get-transf-helper n a b)
+  (if (= a b)
+      null
+      (if (< n (+ a (quotient (+ 1 (- b a)) 3)))
+          (append (list 1) (get-transf-helper n a (- (+ a (quotient (+ 1 (- b a)) 3)) 1)))
+          (if (< n (+ a (* 2 (quotient (+ 1 (- b a)) 3))))
+              (append (list 2) (get-transf-helper n (+ a (quotient (+ 1 (- b a)) 3)) (- (+ a (* 2 (quotient (+ 1 (- b a)) 3))) 1)))
+              (append (list 3) (get-transf-helper n (+ a (* 2 (quotient (+ 1 (- b a)) 3))) b))))))
+              
+
 (define (get-transformations n)
-  'your-code-here)
+  (if (= n 1)
+      null
+      (get-transf-helper n (+ 1 (progression-sum (- (get-level n 0) 2))) (progression-sum (- (get-level n 0) 1)))))
+         
 
 
 ; TODO
@@ -91,11 +123,17 @@
 ; în urma aplicării transformărilor din Ts asupra ppt.
 ; Utilizați recursivitate pe coadă.
 (define (apply-matrix-transformations Ts ppt)
-  'your-code-here)
+  (if (null? Ts)
+      ppt
+      (if (= (car Ts) 1)
+          (apply-matrix-transformations (cdr Ts) (multiply T1 ppt))
+          (if (= (car Ts) 2)
+              (apply-matrix-transformations (cdr Ts) (multiply T2 ppt))
+              (apply-matrix-transformations (cdr Ts) (multiply T3 ppt))))))
 
 
 ; TODO
 ; Implementați o funcție care calculează al n-lea TPP
 ; din arbore, folosind funcțiile anterioare.
 (define (get-nth-ppt-from-matrix-transformations n)
-  'your-code-here)
+  (apply-matrix-transformations (get-transformations n) '(3 4 5)))
