@@ -169,8 +169,20 @@
 ; modul optim în care funcția să își primească parametrii.
 ; Din acest motiv checker-ul nu testează separat această funcție,
 ; dar asistentul va observa dacă implementarea respectă cerința.
-(define (get-nth-tuple n tuple F1 F2 F3)
-  'your-code-here)
+
+;(define (get-nth-tuple n tuple F1 F2 F3)
+ ; 'your-code-here)
+
+(define get-nth-tuple
+  (lambda (tuple F1 F2 F3)
+    (lambda (n)
+      (apply-functional-transformations
+       (map (lambda (x)
+              (if (= x 1)
+                  F1
+                  (if (= x 2)
+                      F2
+                      F3))) (get-transformations n)) tuple))))
 
 
 ; TODO
@@ -178,7 +190,8 @@
 ; (hint: aplicare parțială) o funcție care calculează al n-lea
 ; TPP din arbore, folosind transformările pe triplete.
 (define get-nth-ppt-from-matrix-transformations
-  'your-code-here)
+ ; (get-nth-tuple '(3 4 5) T1 T2 T3))
+  `your-code-here)
 
 
 ; TODO
@@ -186,7 +199,7 @@
 ; (hint: aplicare parțială) o funcție care calculează al n-lea 
 ; cvartet din arbore, folosind transformările pe cvartete.
 (define get-nth-quadruple
-  'your-code-here)
+  (get-nth-tuple '(1 1 2 3) (apply Q1 V) (apply Q2 V) (apply Q3 V)))
 
 
 ; TODO
