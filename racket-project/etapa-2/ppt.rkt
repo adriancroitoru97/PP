@@ -190,8 +190,10 @@
 ; (hint: aplicare parțială) o funcție care calculează al n-lea
 ; TPP din arbore, folosind transformările pe triplete.
 (define get-nth-ppt-from-matrix-transformations
- ; (get-nth-tuple '(3 4 5) T1 T2 T3))
-  `your-code-here)
+  (get-nth-tuple '(3 4 5)
+                 (lambda (V) (multiply T1 V))
+                 (lambda (V) (multiply T2 V))
+                 (lambda (V) (multiply T3 V))))
 
 
 ; TODO
@@ -199,11 +201,24 @@
 ; (hint: aplicare parțială) o funcție care calculează al n-lea 
 ; cvartet din arbore, folosind transformările pe cvartete.
 (define get-nth-quadruple
-  (get-nth-tuple '(1 1 2 3) (apply Q1 V) (apply Q2 V) (apply Q3 V)))
+  (get-nth-tuple '(1 1 2 3)
+                 (lambda (V) (apply Q1 V))
+                 (lambda (V) (apply Q2 V))
+                 (lambda (V) (apply Q3 V))))
 
 
 ; TODO
 ; Folosiți rezultatul întors de get-nth-quadruple pentru a 
 ; obține al n-lea TPP din arbore.
+
+(define get-nth-last-helper
+  (lambda (n)
+    (append
+     (append
+      (append null
+              (list (* (car (get-nth-quadruple n)) (cadddr (get-nth-quadruple n)))))
+      (list (* 2 (cadr (get-nth-quadruple n)) (caddr (get-nth-quadruple n)))))
+     (list (+ (* (cadr (get-nth-quadruple n)) (cadr (get-nth-quadruple n))) (* (caddr (get-nth-quadruple n)) (caddr (get-nth-quadruple n))))))))
+     
 (define get-nth-ppt-from-GH-quadruples
-  'your-code-here)
+  get-nth-last-helper)
