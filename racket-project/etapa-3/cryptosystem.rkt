@@ -99,9 +99,9 @@
 ; Funcții utile: list->string, integer->char
 (define (codes->message codes)
   (list->string (map (λ (i)
-         (if (zero? i)
-             (integer->char 32)
-             (integer->char (+ i 96)))) codes)))
+                       (if (zero? i)
+                           (integer->char 32)
+                           (integer->char (+ i 96)))) codes)))
                
 
 
@@ -131,8 +131,8 @@
 (define (extend-key key size)
   (letrec ([extend-key-rec (λ (key)
                              (if (> (length key) size)
-                                  (take key size)
-                                  (extend-key-rec (append key key))))])
+                                 (take key size)
+                                 (extend-key-rec (append key key))))])
     (extend-key-rec key)))
     
   
@@ -151,10 +151,17 @@
 ; Ambele funcții primesc două liste de coduri (reprezentând
 ; mesajul clar/criptat, respectiv cheia) și întorc o listă
 ; de coduri (mesajul criptat/decriptat, după caz).
+
+(define encrypt-decrypt-codes
+  (λ (op)
+    (λ (message key)
+      (map (λ (x y) (modulo (op x y) 27)) message (extend-key key (length message)))))) 
+
+  
 (define encrypt-codes
-  'your-code-here)
+  (encrypt-decrypt-codes +))
 (define decrypt-codes
-  'your-code-here)
+  (encrypt-decrypt-codes -))
 
 
 ; TODO
@@ -164,8 +171,16 @@
 ; În acest caz, ambele funcții primesc un șir de caractere
 ; (mesajul clar/criptat) și o listă de coduri (cheia) și
 ; întorc un șir de caractere (mesajul criptat/decriptat).
+
+
+(define encrypt-decrypt-message
+  (λ (op)
+    (λ (message key)
+      (codes->message (op (message->codes message) key)))))
+
+   
 (define encrypt-message
-  'your-code-here)
+  (encrypt-decrypt-message encrypt-codes))
 (define decrypt-message
-  'your-code-here)
+  (encrypt-decrypt-message decrypt-codes))
            
