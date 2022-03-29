@@ -57,20 +57,24 @@
 ; (parcurgerea BFS a arborelui infinit).
 ; Funcție utilă: stream-append
 ; Folosiți cel puțin o formă de let.
+(define ppt-stream-in-tree-order
+  (let BFS
+    ([queue (stream-cons '(3 4 5) empty-stream)])
+    (if (stream-empty? queue) queue
+        (let ([first (stream-first queue)]
+              [rest (stream-rest queue)])
+          (stream-cons
+           first
+           (BFS (stream-append
+                 rest
+                 (stream-append
+                  (list (multiply T1 first))
+                  (stream-append
+                   (list (multiply T2 first))
+                   (stream-append
+                    (list (multiply T3 first)) empty-stream))))))))))
 
-(define (bfs-helper queue)
-  (stream-append (car queue) (bfs-helper
-                              (append
-                               (append
-                                (append (cdr queue) (multiply T1 (car queue))) (multiply T2 (car queue))) (multiply T3 (car queue))))))
-
-   
-;(define ppt-stream-in-tree-order
- ; (let ([queue '(3 4 5)])
- ;   (stream-append (car queue) ppt-stream-in-tree-order
   
-
-
 ;; Un alt mod de a genera TPP se folosește de perechi (g, h)
 ;; care indeplinesc condițiile:
 ;;    g, h impare
