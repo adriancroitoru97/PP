@@ -60,19 +60,18 @@
 (define ppt-stream-in-tree-order
   (let BFS
     ([queue (stream-cons '(3 4 5) empty-stream)])
-    (if (stream-empty? queue) queue
-        (let ([first (stream-first queue)]
-              [rest (stream-rest queue)])
-          (stream-cons
-           first
-           (BFS (stream-append
-                 rest
-                 (stream-append
-                  (list (multiply T1 first))
-                  (stream-append
-                   (list (multiply T2 first))
-                   (stream-append
-                    (list (multiply T3 first)) empty-stream))))))))))
+    (let ([first (stream-first queue)]
+          [rest (stream-rest queue)])
+      (stream-cons
+       first
+       (BFS (stream-append
+             rest
+             (stream-append
+              (list (multiply T1 first))
+              (stream-append
+               (list (multiply T2 first))
+               (stream-append
+                (list (multiply T3 first)) empty-stream)))))))))
 
   
 ;; Un alt mod de a genera TPP se folosește de perechi (g, h)
@@ -148,8 +147,13 @@
 ;    există în rezultatul funcției pairs, dar nu vor mai exista
 ;    în fluxul gh-pairs-stream)
 (define (pairs G H)
-  'your-code-here)
+  (stream-cons
+   (cons (stream-first G) (stream-first H))
+   (stream-append
+    (stream-map (λ (x) (cons (stream-first G) x)) (stream-rest H))
+    (pairs (stream-rest G) (stream-rest H)))))
 
+  
 
 ; TODO
 ; Definiți fluxul de perechi (g, h) pe care se bazează noua
