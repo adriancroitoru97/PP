@@ -146,15 +146,53 @@
 ;  - eliminarea perechilor de numere neprime între ele (care 
 ;    există în rezultatul funcției pairs, dar nu vor mai exista
 ;    în fluxul gh-pairs-stream)
+
+(define (myGH n)
+  (stream-cons n (myGH (+ n 2))))
+
+(define myG
+  (myGH 1))
+
+(define myH
+  (myGH 3))
+
+
+;(define (interclass S1 S2)
+ ; ())
+
+
+;(define (pairs G H)
+ ; (stream-cons
+  ; (cons (stream-first G) (stream-first H))
+   ;(stream-cons
+    ;(stream-first (stream-map (λ (x) (cons (stream-first G) x)) (stream-rest H)))
+    ;(pairs (stream-rest G) (stream-rest H)))))
+
 (define (pairs G H)
-  (stream-cons
-   (cons (stream-first G) (stream-first H))
-   (stream-append
-    (stream-map (λ (x) (cons (stream-first G) x)) (stream-rest H))
-    (pairs (stream-rest G) (stream-rest H)))))
+  (my-flattener (stream-map (λ (h)
+                              (stream-map (λ (g) (cons g h)) (my-stream-filter G h))) H)))
 
+
+(define (my-stream-filter S x)
+  (if (>= (stream-first S) x)
+      null
+      (cons (stream-first S) (my-stream-filter (stream-rest S) x))))
+
+
+(define (my-flattener s)
+  (my-append (stream-first s) (my-flattener (stream-rest s))))
+
+
+(define (my-append s1 s2)
+  (cond
+    [(stream-empty? s1) s2] 
+    [(stream-empty? s2) s1]
+    [else 
+     (cons (stream-first s1) 
+           (delay (my-append (stream-rest s1) s2)))]))
+ 
+   
   
-
 ; TODO
 ; Definiți fluxul de perechi (g, h) pe care se bazează noua
 ; indexare a TPP.
