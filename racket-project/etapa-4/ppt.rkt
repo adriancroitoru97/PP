@@ -160,7 +160,6 @@
 ;(define (interclass S1 S2)
  ; ())
 
-
 ;(define (pairs G H)
  ; (stream-cons
   ; (cons (stream-first G) (stream-first H))
@@ -168,9 +167,38 @@
     ;(stream-first (stream-map (λ (x) (cons (stream-first G) x)) (stream-rest H)))
     ;(pairs (stream-rest G) (stream-rest H)))))
 
+;(define (pairs G H)
+ ; (stream-cons
+  ; (cons (- (stream-first H) 2) (stream-first H))
+   ;(stream-append
+    ;(let cacat ([lowers (my-stream-filter G (stream-first H))])
+     ; (if (null? lowers)
+      ;    null
+       ;   (append (list (cons (car lowers) (stream-first (stream-rest H)))) (cacat (cdr lowers)))))
+    ;(pairs G (stream-rest H)))))
+
+
 (define (pairs G H)
-  (my-flattener (stream-map (λ (h)
-                              (stream-map (λ (g) (cons g h)) (my-stream-filter G h))) H)))
+  (let pisat ([G2 G] [H2 H])
+    (stream-cons
+     (cons (stream-first G2) (stream-first H2))
+     (stream-append
+      (let cacat ([lowers (my-stream-filter G (stream-first H2))])
+        (if (null? lowers)
+            null
+            (append (list (cons (car lowers) (stream-first (stream-rest H2)))) (cacat (cdr lowers)))))
+      (pisat (stream-rest G2) (stream-rest H2))))))
+
+;(define (pairs G H)
+ ; (stream-map (λ (h)
+  ;              (let rec-try ([lowers (my-stream-filter G h)])
+   ;               (if (null? lowers)
+    ;                  null
+     ;                 (cons (cons (car lowers) h) (rec-try (cdr lowers)))))) H))
+
+;(define (pairs G H)
+ ; (stream-map (λ (h)
+  ;              (map (λ (g) (cons g h)) (my-stream-filter G h))) H))
 
 
 (define (my-stream-filter S x)
@@ -178,20 +206,7 @@
       null
       (cons (stream-first S) (my-stream-filter (stream-rest S) x))))
 
-
-(define (my-flattener s)
-  (my-append (stream-first s) (my-flattener (stream-rest s))))
-
-
-(define (my-append s1 s2)
-  (cond
-    [(stream-empty? s1) s2] 
-    [(stream-empty? s2) s1]
-    [else 
-     (cons (stream-first s1) 
-           (delay (my-append (stream-rest s1) s2)))]))
  
-   
   
 ; TODO
 ; Definiți fluxul de perechi (g, h) pe care se bazează noua
