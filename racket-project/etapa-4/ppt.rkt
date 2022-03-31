@@ -146,68 +146,20 @@
 ;  - eliminarea perechilor de numere neprime între ele (care 
 ;    există în rezultatul funcției pairs, dar nu vor mai exista
 ;    în fluxul gh-pairs-stream)
-
-(define (myGH n)
-  (stream-cons n (myGH (+ n 2))))
-
-(define myG
-  (myGH 1))
-
-(define myH
-  (myGH 3))
-
-
-;(define (interclass S1 S2)
- ; ())
-
-;(define (pairs G H)
- ; (stream-cons
-  ; (cons (stream-first G) (stream-first H))
-   ;(stream-cons
-    ;(stream-first (stream-map (λ (x) (cons (stream-first G) x)) (stream-rest H)))
-    ;(pairs (stream-rest G) (stream-rest H)))))
-
-;(define (pairs G H)
- ; (stream-cons
-  ; (cons (- (stream-first H) 2) (stream-first H))
-   ;(stream-append
-    ;(let cacat ([lowers (my-stream-filter G (stream-first H))])
-     ; (if (null? lowers)
-      ;    null
-       ;   (append (list (cons (car lowers) (stream-first (stream-rest H)))) (cacat (cdr lowers)))))
-    ;(pairs G (stream-rest H)))))
-
-
 (define (pairs G H)
-  (let pisat ([G2 G] [H2 H])
+  (let pairs-rec ([Grec G] [Hrec H] [idx 1])
     (stream-cons
-     (cons (stream-first G2) (stream-first H2))
+     (cons (stream-first Grec) (stream-first Hrec))
      (stream-append
-      (let cacat ([lowers (my-stream-filter G (stream-first H2))])
+      (let new-pairs ([lowers (stream->list (stream-take G idx))])
         (if (null? lowers)
             null
-            (append (list (cons (car lowers) (stream-first (stream-rest H2)))) (cacat (cdr lowers)))))
-      (pisat (stream-rest G2) (stream-rest H2))))))
-
-;(define (pairs G H)
- ; (stream-map (λ (h)
-  ;              (let rec-try ([lowers (my-stream-filter G h)])
-   ;               (if (null? lowers)
-    ;                  null
-     ;                 (cons (cons (car lowers) h) (rec-try (cdr lowers)))))) H))
-
-;(define (pairs G H)
- ; (stream-map (λ (h)
-  ;              (map (λ (g) (cons g h)) (my-stream-filter G h))) H))
+            (append (list (cons (car lowers)
+                                (stream-first (stream-rest Hrec))))
+                    (new-pairs (cdr lowers)))))
+      (pairs-rec (stream-rest Grec) (stream-rest Hrec) (add1 idx))))))
 
 
-(define (my-stream-filter S x)
-  (if (>= (stream-first S) x)
-      null
-      (cons (stream-first S) (my-stream-filter (stream-rest S) x))))
-
- 
-  
 ; TODO
 ; Definiți fluxul de perechi (g, h) pe care se bazează noua
 ; indexare a TPP.
