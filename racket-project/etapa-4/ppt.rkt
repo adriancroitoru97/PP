@@ -164,14 +164,28 @@
 ; Definiți fluxul de perechi (g, h) pe care se bazează noua
 ; indexare a TPP.
 ; Nu folosiți recursivitate explicită.
+
+(define (naturals n)
+  (stream-cons n (naturals (add1 n))))
+
+(define G
+  (stream-map (λ (x) (+ (* 2 x) 1)) (naturals 0)))
+
 (define gh-pairs-stream
-  'your-code-here)
+  (stream-filter (λ (x)
+                   (if (= 1 (gcd (car x) (cdr x)))
+                       #t #f))
+                 (pairs G (stream-rest G))))
 
 
 ; TODO
 ; Definiți fluxul de TPP corespunzător fluxului anterior de
 ; perechi (g, h).
 (define ppt-stream-in-pair-order
-  'your-code-here)
-
-
+  (stream-map (λ (pair)
+                (let ([g (car pair)]
+                      [h (cdr pair)])
+                  (list (* g h)
+                        (/ (- (* h h) (* g g)) 2)
+                        (/ (+ (* h h) (* g g)) 2))))
+              gh-pairs-stream))
