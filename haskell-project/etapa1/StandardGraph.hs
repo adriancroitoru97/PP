@@ -128,7 +128,16 @@ splitNode :: Ord a
           -> [a]              -- nodurile cu care este înlocuit
           -> StandardGraph a  -- graful existent
           -> StandardGraph a  -- graful obținut
-splitNode old news graph = undefined
+splitNode old news graph =
+    let oldEdges            = (edges graph)
+        edgesFromOld        = S.toList $ S.filter (\x -> fst x == old) oldEdges
+        edgesToOld          = S.toList $ S.filter (\x -> snd x == old) oldEdges
+        deletedOldGraph     = (removeNode old graph)
+        addedEdges          = [(fst x, y) | x <- edgesToOld, y <- news] ++ [(x, snd y) | x <- news, y <- edgesFromOld]
+        newNodes            = S.fromList (news ++ S.toList (nodes deletedOldGraph))
+        newEdges            = S.fromList (addedEdges ++ S.toList (edges deletedOldGraph))
+    in (newNodes, newEdges)
+
 
 {-
     *** TODO ***
@@ -147,4 +156,25 @@ mergeNodes :: Ord a
            -> a                -- noul nod
            -> StandardGraph a  -- graful existent
            -> StandardGraph a  -- graful obținut
-mergeNodes prop node graph = undefined
+mergeNodes prop node graph =
+    let oldEdges            = (edges graph)
+        oldNodes            = (nodes graph)
+        mergedNodes         = S.toList $ S.filter prop oldNodes
+        edgesFromMerged     = S.toList $ S.filter (\x -> (elem (fst x) mergedNodes)) oldEdges
+        edgesToMerged       = S.toList $ S.filter (\x -> (elem (snd x) mergedNodes)) oldEdges
+        deletedMergedGraph  = foldl (\acc x -> (removeNode x acc)) graph mergedNodes
+
+        mrgToMrgEdge        = [x | x <- edgesFromMerged, (elem (snd x) mergedNodes)] ++
+                              [x | x <- edgesToMerged, (elem (fst x) mergedNodes)]
+
+        addedEdges          = [(fst x, node) | x <- edgesToMerged, not (elem (fst x) mergedNodes)] ++
+                              [(node, snd y) | y <- edgesFromMerged, not (elem (snd y) mergedNodes)]
+        auxAddedEdges       = addedEdges ++ S.toList (edges deletedMergedGraph)
+
+        newNodes            = if (nodes deletedMergedGraph == nodes graph)
+                                then oldNodes
+                              else S.fromList (node : S.toList (nodes deletedMergedGraph))
+        newEdges            = if (length mrgToMrgEdge) > 0
+                                then S.fromList ((node, node) : auxAddedEdges)
+                              else S.fromList (auxAddedEdges)
+    in (newNodes, newEdges)
