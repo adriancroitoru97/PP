@@ -26,12 +26,37 @@ type Graph a = StandardGraph a
     Hint: Scrieți o funcție auxiliară care primește ca parametru suplimentar
     o mulțime (set) care reține nodurile vizitate până în momentul curent.
 -}
+
+removeDuplicates :: Ord a => [a] -> [a]
+removeDuplicates list
+    | null list = list
+    | otherwise = (head list) : removeDuplicates (filter (\y -> y /= (head list)) (tail list))
+
+getNeighbs :: Ord a => a -> StandardGraph a -> [a]
+getNeighbs node graph = [snd x | x <- S.toList (edges graph), (fst x) == node]
+
+searchAux :: Ord a
+       => ([a] -> [a] -> [a])  
+       -> a                    
+       -> Graph a
+       -> [a]
+       -> [a]      
+       -> [a]
+searchAux f node graph list visited =
+    if (length list) == 0 then []
+    else
+        let neighbours     = (getNeighbs node graph)
+            newList        = removeDuplicates (f (tail list) (filter (\x -> (not (elem x visited))) neighbours))
+            updVisited     = node : visited
+        in node : (searchAux f (head newList) graph newList updVisited)
+
 search :: Ord a
        => ([a] -> [a] -> [a])  -- funcția de îmbinare a listelor de noduri
        -> a                    -- nodul de pornire
        -> Graph a              -- graful
        -> [a]                  -- lista obținută în urma parcurgerii
-search f node graph = undefined
+search f node graph = (searchAux f node graph [node] [])
+    
 
 {-
     *** TODO ***
@@ -47,7 +72,10 @@ search f node graph = undefined
     [4,1,2,3]
 -}
 bfs :: Ord a => a -> Graph a -> [a]
-bfs = undefined
+bfs =
+    let
+        f = (\list neighs -> list ++ neighs)
+    in (\node graph -> (search f node graph))
 
 {-
     *** TODO ***
@@ -63,7 +91,10 @@ bfs = undefined
     [4,1,2,3]
 -}
 dfs :: Ord a => a -> Graph a -> [a]
-dfs = undefined
+dfs =
+    let
+        f = (\list neighs -> neighs ++ list)
+    in (\node graph -> (search f node graph))
 
 {-
     *** TODO ***
