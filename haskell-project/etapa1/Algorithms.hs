@@ -1,6 +1,7 @@
 module Algorithms where
 
 import qualified Data.Set as S
+import qualified Data.List as L
 import StandardGraph
 
 {-
@@ -27,10 +28,10 @@ type Graph a = StandardGraph a
     o mulțime (set) care reține nodurile vizitate până în momentul curent.
 -}
 
-removeDuplicates :: Ord a => [a] -> [a]
-removeDuplicates list
-    | null list = list
-    | otherwise = (head list) : removeDuplicates (filter (\y -> y /= (head list)) (tail list))
+-- removeDuplicates :: Ord a => [a] -> [a]
+-- removeDuplicates list
+--     | null list = list
+--     | otherwise = (head list) : removeDuplicates (filter (\y -> y /= (head list)) (tail list))
 
 getNeighbs :: Ord a => a -> StandardGraph a -> [a]
 getNeighbs node graph = [snd x | x <- S.toList (edges graph), (fst x) == node]
@@ -46,7 +47,7 @@ searchAux f node graph list visited =
     if (length list) == 0 then []
     else
         let neighbours     = (getNeighbs node graph)
-            newList        = removeDuplicates (f (tail list) (filter (\x -> (not (elem x visited))) neighbours))
+            newList        = L.nub (f (tail list) (filter (\x -> (not (elem x visited))) neighbours))
             updVisited     = node : visited
         in node : (searchAux f (head newList) graph newList updVisited)
 
@@ -130,4 +131,13 @@ countIntermediate :: Ord a
                   -> a                 -- nodul destinație
                   -> StandardGraph a   -- graful
                   -> Maybe (Int, Int)  -- numărul de noduri expandate de BFS/DFS
-countIntermediate from to graph = undefined
+countIntermediate from to graph =
+    let dfsSearch = (dfs from graph)
+        bfsSearch = (bfs from graph)
+        dfsSteps = (length $ fst (span (/=  to) dfsSearch)) - 1
+        bfsSteps = (length $ fst (span (/=  to) bfsSearch)) - 1
+    in if ((length dfsSearch == dfsSteps + 1) || (length bfsSearch == bfsSteps + 1) ||
+            dfsSteps <= 0 || bfsSteps <= 0)
+        then Nothing
+       else Just (bfsSteps, dfsSteps)
+    
