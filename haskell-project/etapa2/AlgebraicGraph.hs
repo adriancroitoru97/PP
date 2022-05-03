@@ -89,7 +89,7 @@ inNeighbors node _ = S.empty
     nemodificați. De exemplu, parametrul node nu se modifică, în timp ce
     parametrul graph se modifică.
 -}
-removeNode :: (Eq a, Ord a) => a -> AlgebraicGraph a -> AlgebraicGraph a
+removeNode :: (Eq a) => a -> AlgebraicGraph a -> AlgebraicGraph a
 removeNode node Empty = Empty
 removeNode node (Node a) = if node == a then Empty else Node a
 removeNode node (Overlay a b) = Overlay (func a) (func b)

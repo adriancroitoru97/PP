@@ -30,14 +30,14 @@ type Partition a = S.Set (S.Set a)
     > mapSingle (+10) [1,2,3]
     [[11,2,3],[1,12,3],[1,2,13]]
 -}
+mapSingle :: (a -> a) -> [a] -> [[a]]
+mapSingle f xs = mapSingleHelper f xs 0
+
 mapSingleHelper :: (a -> a) -> [a] -> Int -> [[a]]
 mapSingleHelper f xs idx =
     if idx == length xs
         then []
-    else (take (idx - 1) xs ++ f (xs !! idx) ++ drop (idx + 1) xs) ++ mapSingleHelper f xs (idx + 1)
-
-mapSingle :: (a -> a) -> [a] -> [[a]]
-mapSingle f xs = mapSingleHelper f xs 0
+    else (take idx xs ++ (f (xs !! idx) : drop (idx + 1) xs)) : mapSingleHelper f xs (idx + 1)
 
 {-
     *** TODO ***
@@ -65,4 +65,12 @@ mapSingle f xs = mapSingleHelper f xs 0
     [[[1],[2],[3]],[[1,2],[3]],[[2],[1,3]],[[1],[2,3]],[[1,2,3]]]
 -}
 partitions :: [a] -> [[[a]]]
-partitions xs = undefined
+partitions [] = [[[]]]
+partitions [x] = [[[x]]]
+partitions (x : xs) = [ys | yss <- partitions xs, ys <- partitionsHelper x yss]
+-- partitions (x : xs) = [ys | yss <- partitions xs, ys <- mapSingle (x :) yss]
+
+partitionsHelper :: a -> [[a]] -> [[[a]]]
+partitionsHelper x [] = [[[x]]]
+partitionsHelper x (xs : xss) = [([([x] ++ xs)] ++ xss)] ++
+                                map ([xs] ++) (partitionsHelper x xss)
