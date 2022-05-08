@@ -68,7 +68,6 @@ partitions :: [a] -> [[[a]]]
 partitions [] = [[[]]]
 partitions [x] = [[[x]]]
 partitions (x : xs) = [ys | yss <- partitions xs, ys <- partitionsHelper x yss]
--- partitions (x : xs) = [ys | yss <- partitions xs, ys <- mapSingle (x :) yss]
 
 partitionsHelper :: a -> [[a]] -> [[[a]]]
 partitionsHelper x [] = [[[x]]]
