@@ -5,9 +5,9 @@
 % initialState/1
 % initialState(-State)
 % Este adevărat pentru starea inițială a jocului.
-
-initialState(state([X, X, X, X, X, X, X, X, X], x, _)) :-
-                empty_board(X).
+initialState(state([X, X, X, X, X, X, X, X, X], x, _, Avl)) :-
+    empty_board(X),
+    positions(Avl).
 
 % getBoards/2
 % getBoards(+State, -Boards)
@@ -18,7 +18,7 @@ initialState(state([X, X, X, X, X, X, X, X, X], x, _)) :-
 % Fiecare element din listă este o listă de 9 elemente, reprezentând
 % pozițiile de pe tablă, ca x, 0, sau ''.
 % Pozițiile sunt în ordinea din lista positions (din utils.pl).
-getBoards(state(State, _, _), [Nw, N, Ne, W, C, E, Sw, S, Se]) :-
+getBoards(state(State, _, _, _), [Nw, N, Ne, W, C, E, Sw, S, Se]) :-
     nth0(0, State, Nw), nth0(1, State, N), nth0(2, State, Ne),
     nth0(3, State, W), nth0(4, State, C), nth0(5, State, E),
     nth0(6, State, Sw), nth0(7, State, S), nth0(8, State, Se).
@@ -40,25 +40,10 @@ getBoard(State, UPos, Board) :- getBoards(State, Boards),
 % Întoarce reprezentarea UBoard-ului, indicând tablele individuale câștigate,
 % remizate, sau încă în desfășurare. Reprezentarea este aceeași ca a tablelor
 % individuale (vezi getBoards/2).
-getUBoard(state([Nw, N, Ne, W, C, E, Sw, S, Se], _, _), [Nw1, N1, Ne1, W1, C1, E1, Sw1, S1, Se1]) :-
-    ((player_wins(x, Nw), Nw1 = x); (player_wins(0, Nw), Nw1 = 0);
-        (countOccurances(Nw, 0, A), countOccurances(Nw, x, B), A + B == 9, Nw1 = r); Nw1 = ''),
-    ((player_wins(x, N), N1 = x); (player_wins(0, N), N1 = 0);
-        (countOccurances(N, 0, A), countOccurances(N, x, B), A + B == 9, N1 = r); N1 = ''),
-    ((player_wins(x, Ne), Ne1 = x); (player_wins(0, Ne), Ne1 = 0);
-        (countOccurances(Ne, 0, A), countOccurances(Ne, x, B), A + B == 9, Ne1 = r); Ne1 = ''),
-    ((player_wins(x, W), W1 = x); (player_wins(0, W), W1 = 0);
-        (countOccurances(W, 0, A), countOccurances(W, x, B), A + B == 9, W1 = r); W1 = ''),
-    ((player_wins(x, C), C1 = x); (player_wins(0, C), C1 = 0);
-        (countOccurances(C, 0, A), countOccurances(C, x, B), A + B == 9, C1 = r); C1 = ''),
-    ((player_wins(x, E), E1 = x); (player_wins(0, E), E1 = 0);
-        (countOccurances(E, 0, A), countOccurances(E, x, B), A + B == 9, E1 = r); E1 = ''),
-    ((player_wins(x, Sw), Sw1 = x); (player_wins(0, Sw), Sw1 = 0);
-        (countOccurances(Sw, 0, A), countOccurances(Sw, x, B), A + B == 9, Sw1 = r); Sw1 = ''),
-    ((player_wins(x, S), S1 = x); (player_wins(0, S), S1 = 0);
-        (countOccurances(S, 0, A), countOccurances(S, x, B), A + B == 9, S1 = r); S1 = ''),
-    ((player_wins(x, Se), Se1 = x); (player_wins(0, Se), Se1 = 0);
-        (countOccurances(Se, 0, A), countOccurances(Se, x, B), A + B == 9, Se1 = r); Se1 = '').
+getUBoard(state([Nw, N, Ne, W, C, E, Sw, S, Se], _, _, _), [Nw1, N1, Ne1, W1, C1, E1, Sw1, S1, Se1]) :-
+    getBoardResult(Nw, Nw1), getBoardResult(N, N1), getBoardResult(Ne, Ne1),
+    getBoardResult(W, W1), getBoardResult(C, C1), getBoardResult(E, E1),
+    getBoardResult(Sw, Sw1), getBoardResult(S, S1), getBoardResult(Se, Se1).
 
 % getPos/4
 % getPos(+State, +UPos, +Pos, -Cell).
@@ -79,8 +64,8 @@ getPos(Board, Pos, Cell) :- positions(X), nth0(Index, X, Pos),
 % getNextPlayer(+State), -NextPlayer)
 % Este adevărat dacă în starea State, jucătorul care urmează este NextPlayer
 % (poate fi x sau 0)..
-getNextPlayer(state(_, x, _), x).
-getNextPlayer(state(_, 0, _), 0).
+getNextPlayer(state(_, x, _, _), x).
+getNextPlayer(state(_, 0, _, _), 0).
 
 % getNextAvailableBoards/2
 % getNextAvailableBoards(+State, -NextBoardsPoss)
@@ -96,11 +81,11 @@ filter([_ | P2], [_ | Rest], Result) :-
    filter(P2, Rest, Result).
 
 getNextAvailableBoards(S, Boards) :- initialState(S), positions(Boards).
-getNextAvailableBoards(state(S, _, L), Boards) :-
-    getUBoard(state(S, _, _), UBoard),
+getNextAvailableBoards(state(S, _, L, _), Boards) :-
+    getUBoard(state(S, _, _, _), UBoard),
     (getPos(UBoard, L, x); getPos(UBoard, L, 0); getPos(UBoard, L, r)),
     positions(Y), filter(UBoard, Y, Boards).
-getNextAvailableBoards(state(_, _, L), Boards) :-
+getNextAvailableBoards(state(_, _, L, _), Boards) :-
     Boards = [L].
 
 
@@ -114,7 +99,10 @@ getNextAvailableBoards(state(_, _, L), Boards) :-
 % tabla nu a fost câștigată);
 % '', dacă tabla nu a fost câștigată și nu s-au completat toate pozițiile.
 % NOTĂ: este deja definit predicatul player_wins/2 în utils.pl.
-getBoardResult(_, _) :- false.
+getBoardResult(Board, P) :- player_wins(P, Board).
+getBoardResult(Board, P) :- countOccurances(Board, 0, A), countOccurances(Board, x, B), 9 is A + B, P = r.
+getBoardResult(_, '').
+    
 
 % buildState/3
 % buildState(+Boards, +PreviousPos, -State)
@@ -122,7 +110,6 @@ getBoardResult(_, _) :- false.
 % individuale sunt cele din lista Boards, iar ultima mutare a fost în 
 % poziția PreviousPos într-o tablă individuală.
 % NOTĂ: nu contează în care tablă individuală s-a realizat ultima mutare.
-
 countOccurances([], _, 0).
 countOccurances([H | T], H, N) :- countOccurances(T, H, N1), N is N1 + 1.
 countOccurances([_ | T], H1, N) :- countOccurances(T, H1, N).
@@ -132,19 +119,25 @@ countAll([H | T], X, N) :- countOccurances(H, X, N1), countAll(T, X, N2), N is N
 
 nextTurn(Xes, Zes, P) :- Xes > Zes, P = 0; P = x.
 
-buildState([Nw, N, Ne, W, C, E, Sw, S, Se], L, state(State, P, L)) :-
+buildState([Nw, N, Ne, W, C, E, Sw, S, Se], L, state(State, P, L, NextAvl)) :-
     nth0(0, State, Nw), nth0(1, State, N), nth0(2, State, Ne),
     nth0(3, State, W), nth0(4, State, C), nth0(5, State, E),
     nth0(6, State, Sw), nth0(7, State, S), nth0(8, State, Se),
     countAll([Nw, N, Ne, W, C, E, Sw, S, Se], x, Xes),
     countAll([Nw, N, Ne, W, C, E, Sw, S, Se], 0, Zes),
-    nextTurn(Xes, Zes, P).
+    nextTurn(Xes, Zes, P),
+    getNextAvailableBoards(state(State, P, L, _), NextAvl).
 
 % validMove/2
 % validMove(+State, +Move)
 % Este adevărat dacă mutarea Move este legală în starea State.
 % Move este fie o poziție, în cazul în care este o singură tablă disponibilă
 % pentru a următoarea mutare din starea State, fie o pereche de poziții, altfel.
+validMove(state(_, _, _, [X]), X).
+    % :- getBoard(S, Avl, Board), getBoardResult(Board, '').
+validMove(state(S, _, _, Avl), (UPos, Pos)) :-
+    member(UPos, Avl), getBoard(S, UPos, Board),
+    getBoardResult(Board, ''), getPos(Board, Pos, '').
 validMove(_, _) :- false.
 
 % makeMove/3
