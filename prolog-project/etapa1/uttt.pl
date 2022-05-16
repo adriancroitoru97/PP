@@ -84,7 +84,7 @@ getNextAvailableBoards(S, Boards) :- initialState(S), positions(Boards).
 getNextAvailableBoards(state(S, _, L, _), Boards) :-
     getUBoard(state(S, _, _, _), UBoard),
     (getPos(UBoard, L, x); getPos(UBoard, L, 0); getPos(UBoard, L, r)),
-    positions(Y), filter(UBoard, Y, Boards).
+    positions(Y), filter(UBoard, Y, Boards), !.
 getNextAvailableBoards(state(_, _, L, _), Boards) :-
     Boards = [L].
 
@@ -99,8 +99,8 @@ getNextAvailableBoards(state(_, _, L, _), Boards) :-
 % tabla nu a fost câștigată);
 % '', dacă tabla nu a fost câștigată și nu s-au completat toate pozițiile.
 % NOTĂ: este deja definit predicatul player_wins/2 în utils.pl.
-getBoardResult(Board, P) :- player_wins(P, Board).
-getBoardResult(Board, P) :- countOccurances(Board, 0, A), countOccurances(Board, x, B), 9 is A + B, P = r.
+getBoardResult(Board, P) :- player_wins(P, Board),!.
+getBoardResult(Board, P) :- countOccurances(Board, 0, A), countOccurances(Board, x, B), 9 is A + B, P = r, !.
 getBoardResult(_, '').
     
 
@@ -111,15 +111,18 @@ getBoardResult(_, '').
 % poziția PreviousPos într-o tablă individuală.
 % NOTĂ: nu contează în care tablă individuală s-a realizat ultima mutare.
 countOccurances([], _, 0).
-countOccurances([H | T], H, N) :- countOccurances(T, H, N1), N is N1 + 1.
+countOccurances([H | T], H, N) :- countOccurances(T, H, N1), N is N1 + 1, !.
 countOccurances([_ | T], H1, N) :- countOccurances(T, H1, N).
 
 countAll([], _, 0).
 countAll([H | T], X, N) :- countOccurances(H, X, N1), countAll(T, X, N2), N is N2 + N1.
 
-nextTurn(Xes, Zes, P) :- Xes > Zes, P = 0; P = x.
+nextTurn(Xes, Zes, P) :-
+    Xes > Zes, P = 0, !;
+    P = x.
 
 buildState([Nw, N, Ne, W, C, E, Sw, S, Se], L, state(State, P, L, NextAvl)) :-
+    length(State, 9),
     nth0(0, State, Nw), nth0(1, State, N), nth0(2, State, Ne),
     nth0(3, State, W), nth0(4, State, C), nth0(5, State, E),
     nth0(6, State, Sw), nth0(7, State, S), nth0(8, State, Se),
@@ -133,12 +136,19 @@ buildState([Nw, N, Ne, W, C, E, Sw, S, Se], L, state(State, P, L, NextAvl)) :-
 % Este adevărat dacă mutarea Move este legală în starea State.
 % Move este fie o poziție, în cazul în care este o singură tablă disponibilă
 % pentru a următoarea mutare din starea State, fie o pereche de poziții, altfel.
-validMove(state(_, _, _, [X]), X).
-    % :- getBoard(S, Avl, Board), getBoardResult(Board, '').
-validMove(state(S, _, _, Avl), (UPos, Pos)) :-
-    member(UPos, Avl), getBoard(S, UPos, Board),
-    getBoardResult(Board, ''), getPos(Board, Pos, '').
-validMove(_, _) :- false.
+gameNotFinished(S) :- getUBoard(S, UB), getBoardResult(UB, R), R \= x, R \= 0, R \= r.
+
+validMove(state(S, P, L, Avl), Pos) :-
+    gameNotFinished(state(S, P, L, Avl)),
+    length(Avl, 1),
+    nth0(0, Avl, Board),
+    getPos(state(S, P, L, Avl), Board, Pos, '').
+
+validMove(state(S, P, L, Avl), (UPos, Pos)) :-
+    gameNotFinished(state(S, P, L, Avl)),
+    member(UPos, Avl),
+    getBoard(state(S, P, L, Avl), UPos, Board), getBoardResult(Board, ''),
+    getPos(Board, Pos, '').
 
 % makeMove/3
 % makeMove(+State, +Move, -NewState)
@@ -149,18 +159,60 @@ validMove(_, _) :- false.
 % fie o pereche de poziții, altfel.
 %
 % Hint: folosiți validMove pentru a verifica mutarea și buildState pentru a construi o stare.
-makeMove(_, _, _) :- false.
+
+replaceElementAtIndex(Index, List, New, Result) :-
+    nth0(Index, List, _, X),
+    nth0(Index, Result, New, X).
+
+makeMove(state(S, P, L, Avl), Move, NewState) :-
+    validMove(state(S, P, L, Avl), Move),
+    positions(PS), nth0(Index, PS, Move), nth0(UIndex, PS, L),  % indecsi Board si Uboard mutare
+    nth0(UIndex, S, Board),                                     % Board-ul pe care se muta
+    replaceElementAtIndex(Index, Board, P, NTemp),              % P face mutarea pe Board-ul respectiv, salvat in NTemp acum
+    replaceElementAtIndex(UIndex, S, NTemp, NL),                % Se inlocuieste in vechiul State doar noul joc modificat, NTemp
+    buildState(NL, Move, NewState).
+
+makeMove(state(S, P, L, Avl), (UPos, Pos), NewState) :-
+    validMove(state(S, P, L, Avl), (UPos, Pos)),
+    positions(PS), nth0(Index, PS, Pos), nth0(UIndex, PS, UPos),
+    nth0(UIndex, S, Board),
+    replaceElementAtIndex(Index, Board, P, NTemp),
+    replaceElementAtIndex(UIndex, S, NTemp, NL),
+    buildState(NL, Pos, NewState).
+
 
 % dummy_first/2
 % dummy_first(+State, -NextMove)
 % Predicatul leagă NextMove la următoarea mutare pentru starea State.
 % Strategia este foarte simplă: va fi aleasă cea mai din stânga-sus mutare posibilă
 % (prima din lista de poziții disponibile).
-dummy_first(_, _) :- false.
+dummy_first(state(S, P, L, Avl), Pos) :-
+    length(Avl, 1),
+    nth0(0, Avl, UPos),
+    getBoard(state(S, P, L, Avl), UPos, Board),       % available board
+    nth0(Index, Board, ''), !, positions(PS), nth0(Index, PS, Pos).
+
+dummy_first(state(S, P, L, Avl), (UPos, Pos)) :-
+    nth0(0, Avl, UPos),
+    getBoard(state(S, P, L, Avl), UPos, Board),       % first available board
+    nth0(Index, Board, ''), !, positions(PS), nth0(Index, PS, Pos).
 
 % dummy_last/2
 % dummy_last(+State, -NextMove)
 % Predicatul leagă NextMove la următoarea mutare pentru starea State.
 % Strategia este foarte simplă: va fi aleasă cea mai din dreapta-jos mutare posibilă 
 % (ultima din lista de poziții disponibile).
-dummy_last(_, _) :- false.
+dummy_last(state(S, P, L, Avl), Pos) :-
+    length(Avl, 1),
+    nth0(0, Avl, UPos),
+    getBoard(state(S, P, L, Avl), UPos, Board),       % available board
+    reverse(Board, RevBoard),                         % reverse available board
+    nth0(RevIndex, RevBoard, ''), !, positions(PS), Index is 8 - RevIndex, nth0(Index, PS, Pos).
+
+dummy_last(state(S, P, L, Avl), (UPos, Pos)) :-
+    length(Avl, AvlLen),
+    AvlLen2 is AvlLen - 1,
+    nth0(AvlLen2, Avl, UPos),
+    getBoard(state(S, P, L, Avl), UPos, Board),       % available board
+    reverse(Board, RevBoard),                         % reverse available board
+    nth0(RevIndex, RevBoard, ''), !, positions(PS), Index is 8 - RevIndex, nth0(Index, PS, Pos).
